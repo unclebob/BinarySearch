@@ -35,6 +35,7 @@ public class BinarySearchTest {
     }
   }
 
+  @Test
   public void outOfOrderThrowsException() throws Exception {
     long[][] outOfOrderArrays = {{1, 0}, {1, 0, 2}, {0, 2, 1}, {0, 1, 2, 4, 3}};
     int exceptions = 0;
@@ -56,9 +57,11 @@ public class BinarySearchTest {
     assertEquals(1, findMidpoint(0, 2));
     assertEquals(1, findMidpoint(0, 3));
     assertEquals(Integer.MAX_VALUE/2, findMidpoint(0,Integer.MAX_VALUE));
-    assertEquals(Integer.MAX_VALUE/2, findMidpoint(1, Integer.MAX_VALUE));
+    assertEquals(Integer.MAX_VALUE/2+1, findMidpoint(1, Integer.MAX_VALUE));
     assertEquals(Integer.MAX_VALUE/2+1, findMidpoint(2, Integer.MAX_VALUE));
-    assertEquals(Integer.MAX_VALUE/2+1, findMidpoint(3, Integer.MAX_VALUE));
+    assertEquals(Integer.MAX_VALUE/2+2, findMidpoint(3, Integer.MAX_VALUE));
+    assertEquals(Integer.MAX_VALUE/2, findMidpoint(1, Integer.MAX_VALUE-2));
+
   }
 
   private void assertFound(int target, long[] domain) {
