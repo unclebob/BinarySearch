@@ -67,12 +67,14 @@ public class BinarySearchTest {
 
   private void assertFound(int target, int index, long[] domain) {
     BinarySearcher searcher = new BinarySearcher(domain);
+    assertTrue(searcher.find(target));
     assertEquals(index, searcher.findLowerBound(target));
   }
 
-  private void assertNotFound(int target, long[] domain) {
+  private void assertNotFound(int target, int index, long[] domain) {
     BinarySearcher searcher = new BinarySearcher(domain);
-    assertEquals(domain.length, searcher.findLowerBound(target));
+    assertFalse(searcher.find(target));
+    assertEquals(index, searcher.findLowerBound(target));
   }
 
   @Test
@@ -80,9 +82,14 @@ public class BinarySearchTest {
     assertFound(0, 0, new long[]{0});
     assertFound(5, 2, new long[]{0,1,5,7});
     assertFound(7, 3, new long[]{0,1,5,7});
+    assertFound(7, 5, new long[]{0,1,2,2,3,7,8});
+    assertFound(2, 2, new long[]{0,1,2,2,3,7,8});
+    assertFound(2, 2, new long[]{0,1,2,2,2,3,7,8});
 
-    assertNotFound(1, new long[]{0});
-    assertNotFound(6, new long[]{1,2,5,7,9});
+    assertNotFound(1, 1, new long[]{0});
+    assertNotFound(6, 3, new long[]{1,2,5,7,9});
+    assertNotFound(0, 0, new long[]{1,2,2,5,7,9});
+    assertNotFound(10, 6, new long[]{1,2,2,5,7,9});
   }
 
   long[] makeArray(int n) {
@@ -97,7 +104,7 @@ public class BinarySearchTest {
     BinarySearcherSpy spy = new BinarySearcherSpy(array);
     spy.findLowerBound(0);
     assertTrue(spy.compares > 0);
-    assertTrue(spy.compares <= compares);
+    assertTrue(""+spy.compares ,spy.compares <= compares+2);
   }
 
   @Test
