@@ -32,16 +32,12 @@ public class BinarySearcher {
     if (l==r)
       return l;
     int midpoint = findMidpoint(l,r);
-    int newL=0, newR=0;
-    if (element > array[midpoint]) {
-      newL = midpoint+1;
-      newR = r;
-    }
-    else {
-      newL = l;
-      newR = midpoint;
-    }
-    return findLowerBound(newL, newR, element);
+    if (element > array[midpoint])
+      l = midpoint+1;
+    else
+      r = midpoint;
+
+    return findLowerBound(l, r, element);
   }
 
   public static class InvalidArray extends RuntimeException {
