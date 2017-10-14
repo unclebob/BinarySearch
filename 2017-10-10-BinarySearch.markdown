@@ -1,9 +1,27 @@
 ---
 layout: post
-title: Let's write a Binary Search
+title: Two old programmers write a Binary Search
 tags: ["Software"]
 ---
-Let's use TDD to write a Binary Search.  Since we know the algorithm already, we don't need to use TDD, or the [TPP](http://blog.cleancoder.com/uncle-bob/2013/05/27/TheTransformationPriorityPremise.html) to derive it.  So we'll just write our tests to verify that the algorithm is correct.
+Andrew Koenig (ARK) wrote to me and said: 
+
+>_"I have an idea for an essay, and wondered if you'd like to collaborate on it.  A simple case study, really: How would you use TDD to write a binary-search function?"_ 
+
+"That sounds like fun." I replied; and began to write this article.  
+
+Andy continued:
+
+>_Sounds easy, but..._
+
+>_Once upon a time, I had dinner with a fellow named Luther Woodrum, who had been introduced to me as IBM's leading export on sorting. He told me that he was in the habit of asking people in lectures, etc., to write a binary search, and almost no one could do it correctly, not even experienced professional programmers._
+
+>_And yet it's obviously a simple concept. So the question is how to translate that simple concept into analogously simple code in a way that gives assurance that it actually works._
+
+My first thought was to write the binary search in Java.  This simplifies a lot of the memory management and pointer arithmetic issues.  
+
+You can follow along with [this](https://github.com/unclebob/BinarySearch) github project.
+
+Since we know the algorithm already, we don't need to use TDD, or the [TPP](http://blog.cleancoder.com/uncle-bob/2013/05/27/TheTransformationPriorityPremise.html) to derive it.  So we'll just write our tests to verify that the algorithm is correct.
 
 We begin, as usual, with an empty test, just to get an execution environment working.
 
@@ -64,7 +82,9 @@ The next few tests make sure we properly handle an invalid input array.
 
 As we continue, you will note that we are following the principle of "Avoiding the gold".  We will write tests around the _outside_ of the problem first; making sure that all the validation and organization is working before we head into the actual problem of doing a binary search.
 
-The next tests check that the input array can be verified to be ordered.  We used this approach because the check is expensive.  Programmers who use this class may already know that their input is properly ordered.  Other programmers may need the check.  
+The next tests check that the input array can be verified as ordered.  We used this approach because the check is expensive.  Programmers who use this class may already know that their input is properly ordered.  Other programmers may need the check. 
+
+>_That's what Dijkstra described as wearing flotation vests during training and then discarding them for the actual voyage..._ 
 
     @Test
     public void checkInOrder() throws Exception {
@@ -240,5 +260,195 @@ And, of course, the algorithm that passes these tests is:
         return find(l, midpoint-1, element);
     }
 
-The end result can be found [here](https://github.com/unclebob/BinarySearch).
+I showed this to Andy, and he said: 
 
+>_Why do you consider it an error to be asked to search a zero-length array?_
+
+That was an arbitrary decision on my part.  Perhaps I was a bit hasty.  A zero length array is simply the most degenerate form.  By the rules of TDD, that should have been the first thing I tested. 
+
+    @Test
+    public void zeroSizedArrayFindsNothing() throws Exception {
+      searcher = new BinarySearcher(new long[0]);
+      assertFalse(searcher.find(1));
+    }
+
+>_I don't see any test that would detect a validate function that incorrectly fails on two adjacent equal elements._
+
+Hmmm.  Good catch.  (See, this pair programming stuff really works. ;-)
+
+    @Test
+    public void checkInOrder() throws Exception {
+      long[][] inOrderArrays = { {0}, {0, 1}, {0, 1, 2, 3}, {0,1,1,2,3 } };
+      for (long[] inOrder : inOrderArrays) {
+        searcher = new BinarySearcher(inOrder);
+        searcher.validate();
+      }
+    }
+
+>_`findsProperMidpoint` is too clever by half--in this case, literally. I would expect `Integer.MAX_VALUE` to be an odd number, which means that `Integer.MAX_VALUE/2` truncates away a half. It seems to me that `findsProperMidpoint` should require the midpoint to be exact if the bounds are an even number apart, but should permit rounding in either direction because either rounding will yield correct results. Otherwise, I think there's some overspecification going on._
+
+Instead of rounding, I choose to use the `floor` of the midpoint simply because that's what the [wikipeadia](https://en.wikipedia.org/wiki/Binary_search_algorithm) article suggested. 
+
+>_Is it true that if you increment `Integer.MAX_VALUE` (in Java) you get a negative number? Or do you get an overflow exception?_
+
+Yes, at least empirically.  I'm not sure what the spec says; but my implementation went negative when I incremented `Integer.MAX_VALUE`.  
+
+>_By the way, here's a much, much simpler implementation of findMidpoint:_
+
+    public static int findMidpoint(int l, int r) {
+        return l + (r - l)/2;
+    }
+    
+`<blush>`  Um...  Yeah, that works fine.  `<blush>`
+
+>_When I proposed the original problem of testing a binary search, I did not actually specify the interface to the binary search. I think that the most useful interface is probably something like the C++ lower_bound library function, augmented to return a boolean. That is, the result of a binary search might reasonably be a boolean that indicates whether the value sought is in the array, together with the index of the first element that is >= the element sought (or one off the end if there is no such element)._
+
+Hmmm.  OK, that's an easy change (I think).
+
+    private void assertFound(int target, int index, long[] domain) {
+      BinarySearcher searcher = new BinarySearcher(domain);
+      assertEquals(index, searcher.findLowerBound(target));
+    }
+
+    private void assertNotFound(int target, long[] domain) {
+      BinarySearcher searcher = new BinarySearcher(domain);
+      assertEquals(domain.length, searcher.findLowerBound(target));
+    }
+
+    @Test
+    public void simpleFinds() throws Exception {
+      assertFound(0, 0, new long[]{0});
+      assertFound(5, 2, new long[]{0,1,5,7});
+      assertFound(7, 3, new long[]{0,1,5,7});
+
+      assertNotFound(1, new long[]{0});
+      assertNotFound(6, new long[]{1,2,5,7,9});
+    }
+
+----
+
+    public int findLowerBound(int element) {
+      return findLowerBound(0,array.length,element);
+    }
+
+    protected int findLowerBound(int l, int r, int element) {
+      if (l>=r)
+        return array.length;
+      int midpoint = findMidpoint(l,r);
+      if (array[midpoint] == element)
+        return midpoint;
+      else if (array[midpoint] < element)
+        return findLowerBound(midpoint+1, r, element);
+      else
+        return findLowerBound(l, midpoint-1, element);
+    }
+
+Now I wonder if we don't need some more test cases -- especially with duplicates in the input array.
+
+    private void assertFound(int target, int index, long[] domain) {
+      BinarySearcher searcher = new BinarySearcher(domain);
+      assertTrue(searcher.find(target));
+      assertEquals(index, searcher.findLowerBound(target));
+    }
+
+    private void assertNotFound(int target, int index, long[] domain) {
+      BinarySearcher searcher = new BinarySearcher(domain);
+      assertFalse(searcher.find(target));
+      assertEquals(index, searcher.findLowerBound(target));
+    }
+
+    @Test
+    public void simpleFinds() throws Exception {
+      assertFound(0, 0, new long[]{0});
+      assertFound(5, 2, new long[]{0,1,5,7});
+      assertFound(7, 3, new long[]{0,1,5,7});
+      assertFound(7, 5, new long[]{0,1,2,2,3,7,8});
+      assertFound(2, 2, new long[]{0,1,2,2,3,7,8});
+      assertFound(2, 2, new long[]{0,1,2,2,2,3,7,8});
+
+      assertNotFound(1, 1, new long[]{0});
+      assertNotFound(6, 3, new long[]{1,2,5,7,9});
+      assertNotFound(0, 0, new long[]{1,2,2,5,7,9});
+      assertNotFound(10, 6, new long[]{1,2,2,5,7,9});
+    }
+    
+Yeah, that fails.  OK, let's fix the algorithm a bit...
+
+    public boolean find(int element) {
+      int lowerBound = findLowerBound(element);
+      return lowerBound < array.length && array[lowerBound] == element;
+    }
+
+    public int findLowerBound(int element) {
+      return findLowerBound(0,array.length,element);
+    }
+
+    protected int findLowerBound(int l, int r, int element) {
+      if (l==r)
+        return l;
+      int midpoint = findMidpoint(l,r);
+      if (element > array[midpoint])
+        return findLowerBound(midpoint+1, r, element);
+      else
+        return findLowerBound(l, midpoint, element);
+    }
+    
+The searches all work, but the O(log n) test is failing.  That's because there are a couple of extra compares now.  I should adjust the test. 
+
+    private void assertCompares(int compares, int n) {
+      long[] array = makeArray(n);
+      BinarySearcherSpy spy = new BinarySearcherSpy(array);
+      spy.findLowerBound(0);
+      assertTrue(spy.compares > 0);
+      assertTrue(""+spy.compares ,spy.compares <= compares+2);
+    }
+    
+Whew!  OK, everything works again.  Algorithm's a bit pretter too.  The tests could use a bit of condensing; I don't think that's the minimal set. But let's leave that for awhile.  I think there's more coming.
+
+>_I think it's interesting that you chose a recursive implementation of binary search, because that turns what could have been an algorithm that runs in O(log N) time and O(1) space into one that runs in O(log N) time and O(log N) space._
+
+I chose recursion because it made it simple to write the spy to test O(log N).  However, I was a bit careless since the algorithm can easily be turned into tail recursion.
+
+    protected int findLowerBound(int l, int r, int element) {
+      if (l==r)
+        return l;
+      int midpoint = findMidpoint(l,r);
+      if (element > array[midpoint])
+        l = midpoint+1;
+      else
+        r = midpoint;
+
+      return findLowerBound(l, r, element);
+    }
+
+Sadly, Java does not (yet) support tail call optimization.
+
+>_Which brings up (again) the question of how one goes about testing code that has performance requirements._
+
+Storage is a tough one for simple unit tests like this.  We could spy on the heap calls.  We could also zero out the stack, and inspect it after the calls to check stack depth.  (Maybe the guys at Toyota wish they'd done that a bit more carefully.) 
+
+As for execution time, our spy has managed to measure that for us by counting the number of loops (recursions).  However, there are costs.  The `findLowerBound` function is polymorphically deployed -- and must be in order for the spy to work.  Polymorphic deployment requires a nanosecond or two.  Tests are observers, and so there is some "observer effect" going on here.  
+
+In order for our code to be testable we need to tolerate a certain amount of space and time overhead. We can work to minimize it; but eliminating it entirely would likely require extra hardware (like an emulator).   
+
+>_So...let me suggest another strategy. I'm just going to talk about the innermost part of the search, and I want to implement it as a loop, not as a recursion. Also, as a long-time C programmer, I shall express the range asymmetrically, so I'll use `begin` and `end` as indices rather than `l` and `r`._
+
+>_The essence of a binary search is that if the element we're seeking is in the array at all, it is in the range `[begin, end)`, so we can use that as a loop invariant. And then we can write:_
+
+    while (begin != end) {
+        mid = findMidpoint(begin, end);
+        if (array[mid] < element)
+            begin = mid + 1;
+        else
+            end = mid;
+    }
+
+>_Here, the asymmetry of the assignments reflect the asymmetry of the loop bounds. When we're done, `begin` and `end` are equal, and now, there are three cases:_
+
+>_1) `end` is unchanged from its initial value, in which case every array element < the value sought._
+
+>_2) The value sought < `array[end]`, in which case the value is not in the array and `array[end]` is the leftmost element greater than the value sought, or_
+
+>_3) the value sought == `array[end]`. This is the only case in which a second comparison is necessary._
+
+This is the beginnings of a Dijkstra style proof.  Such a case analysis proof is feasible with a small function like this.  But as the state space grows...
