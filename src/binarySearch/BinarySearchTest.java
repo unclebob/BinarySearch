@@ -21,9 +21,10 @@ public class BinarySearchTest {
     searcher = new BinarySearcher(null);
   }
 
-  @Test(expected = InvalidArray.class)
-  public void zeroSizedArrayThrowsException() throws Exception {
+  @Test
+  public void zeroSizedArrayFindsNothing() throws Exception {
     searcher = new BinarySearcher(new long[0]);
+    assertFalse(searcher.find(1));
   }
 
   @Test

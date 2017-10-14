@@ -5,7 +5,7 @@ public class BinarySearcher {
 
   public BinarySearcher(long[] array) {
     this.array = array;
-    if (array == null || array.length == 0)
+    if (array == null)
       throw new InvalidArray();
   }
 
