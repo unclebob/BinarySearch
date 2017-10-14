@@ -16,8 +16,7 @@ public class BinarySearcher {
   }
 
   public static int findMidpoint(int l, int r) {
-    int carry = ((l&1)+(r&1))>>1;
-    return (l>>1)+(r>>1)+carry;
+    return l + (r - l)/2;
   }
 
   public boolean find(int element) {
