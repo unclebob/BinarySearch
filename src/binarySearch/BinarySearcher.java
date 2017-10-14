@@ -19,20 +19,20 @@ public class BinarySearcher {
     return l + (r - l)/2;
   }
 
-  public boolean find(int element) {
-    return find(0,array.length,element);
+  public int findLowerBound(int element) {
+    return findLowerBound(0,array.length,element);
   }
 
-  protected boolean find(int l, int r, int element) {
+  protected int findLowerBound(int l, int r, int element) {
     if (l>=r)
-      return false;
+      return array.length;
     int midpoint = findMidpoint(l,r);
     if (array[midpoint] == element)
-      return true;
+      return midpoint;
     else if (array[midpoint] < element)
-      return find(midpoint+1, r, element);
+      return findLowerBound(midpoint+1, r, element);
     else
-      return find(l, midpoint-1, element);
+      return findLowerBound(l, midpoint-1, element);
   }
 
   public static class InvalidArray extends RuntimeException {

@@ -24,7 +24,7 @@ public class BinarySearchTest {
   @Test
   public void zeroSizedArrayFindsNothing() throws Exception {
     searcher = new BinarySearcher(new long[0]);
-    assertFalse(searcher.find(1));
+    assertEquals(0, searcher.findLowerBound(1));
   }
 
   @Test
@@ -65,21 +65,21 @@ public class BinarySearchTest {
 
   }
 
-  private void assertFound(int target, long[] domain) {
+  private void assertFound(int target, int index, long[] domain) {
     BinarySearcher searcher = new BinarySearcher(domain);
-    assertTrue(searcher.find(target));
+    assertEquals(index, searcher.findLowerBound(target));
   }
 
   private void assertNotFound(int target, long[] domain) {
     BinarySearcher searcher = new BinarySearcher(domain);
-    assertFalse(searcher.find(target));
+    assertEquals(domain.length, searcher.findLowerBound(target));
   }
 
   @Test
   public void simpleFinds() throws Exception {
-    assertFound(0, new long[]{0});
-    assertFound(5, new long[]{0,1,5,7});
-    assertFound(7, new long[]{0,1,5,7});
+    assertFound(0, 0, new long[]{0});
+    assertFound(5, 2, new long[]{0,1,5,7});
+    assertFound(7, 3, new long[]{0,1,5,7});
 
     assertNotFound(1, new long[]{0});
     assertNotFound(6, new long[]{1,2,5,7,9});
@@ -95,7 +95,7 @@ public class BinarySearchTest {
   private void assertCompares(int compares, int n) {
     long[] array = makeArray(n);
     BinarySearcherSpy spy = new BinarySearcherSpy(array);
-    spy.find(0);
+    spy.findLowerBound(0);
     assertTrue(spy.compares > 0);
     assertTrue(spy.compares <= compares);
   }
@@ -115,8 +115,8 @@ class BinarySearcherSpy extends BinarySearcher {
     super(array);
   }
 
-  protected boolean find(int l, int r, int element) {
+  protected int findLowerBound(int l, int r, int element) {
     compares++;
-    return super.find(l, r, element);
+    return super.findLowerBound(l, r, element);
   }
 }
