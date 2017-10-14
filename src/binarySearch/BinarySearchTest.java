@@ -29,7 +29,7 @@ public class BinarySearchTest {
 
   @Test
   public void checkInOrder() throws Exception {
-    long[][] inOrderArrays = {{0}, {0, 1}, {0, 1, 2, 3}};
+    long[][] inOrderArrays = {{0}, {0, 1}, {0, 1, 2, 3}, {0,1,1,2,3 }};
     for (long[] inOrder : inOrderArrays) {
       searcher = new BinarySearcher(inOrder);
       searcher.validate();
