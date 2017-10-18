@@ -196,13 +196,13 @@ Now we can write some simply tests to check the search results.
 
 We can test these tests by writing a simple linear search.
 
-  public boolean find(int element) {
-    for (int i=0; i<array.length; i++) {
-      if (array[i] == element)
-        return true;
-    }
-    return false;
-  }
+      public boolean find(int element) {
+        for (int i=0; i<array.length; i++) {
+          if (array[i] == element)
+            return true;
+        }
+        return false;
+      }
   
 And now, finally, we can write the test that forces us to implement the binary search.  The test counts the number of comparisons and ensures that number is always O(Log2 N) or less.  We use a simple spy to count the comparisons.
 
